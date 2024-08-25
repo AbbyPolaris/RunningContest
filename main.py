@@ -7,6 +7,8 @@ from datetime import datetime
 import sys
 import random
 from PySide6 import QtCore, QtWidgets, QtGui
+import qdarktheme
+
 
 contest = contest.contest
 serialReader = serialReader.serialConnector
@@ -15,29 +17,32 @@ serialReader = serialReader.serialConnector
 class My_Environment(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        #self.timer =  QtCore.QTimer(self)
-        #self.timer.start(500)
-        #self.timer.timeout.connect(self.refresh())
+        self.timer =  QtCore.QTimer(self)
+        self.timer.start(500)
+        self.timer.timeout.connect(self.refresh)
         self.port = 'tty6'
         self.baudrate = 9600
         self.contest = None
-        self.nextwidget = self
+        self.title = 'RunningContest2024'
+        self.left = 10
+        self.top = 10
+        self.width = 400
+        self.height = 140
         self.connector = serialReader(self.port , self.baudrate)
+        self.initUI()
+    def initUI(self):
         self.time_text = QtWidgets.QLabel(str(datetime.now()),
-                                     alignment=QtCore.Qt.AlignLeft)
-        
+                                    alignment=QtCore.Qt.AlignLeft)
         self.button = QtWidgets.QPushButton("start_competition")
-        
         self.reconnect_button = QtWidgets.QPushButton("reconnect")
-
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.time_text)
         self.layout.addWidget(self.button)
+        self.button.setColor('red')
         self.reconnect_button.clicked.connect(self.reconnect)
-        self.button.clicked.connect(self.make_contest())
+        self.button.clicked.connect(self.make_contest)
     def refresh(self):
-        print("vdf")
-        self.time_text.setText("fgdffg")
+        self.time_text.setText(str(datetime.now()))
     def reconnect(self):
         self.connector.reconnect(self.port,self.baudrate)
     def make_contest(self):
@@ -49,6 +54,7 @@ class My_Environment(QtWidgets.QWidget):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
+    qdarktheme.setup_theme()
     widget = My_Environment()
     widget.resize(800, 600)
     widget.show()
