@@ -2,9 +2,9 @@ from datetime import datetime
 import contestant
 import pandas as pd
 class contest:
-    def __init__(self,round:int,group_cap:int) -> None:
+    def __init__(self,round:int) -> None:
         self.round = round
-        self.group_cap = group_cap
+        self.group_cap = 1
         self.start_time = None
         self.started = False
         self.contestants = []
@@ -12,17 +12,29 @@ class contest:
         self.calculated_times_for_competitors = {}
         self.people_in_groups = {}
         self.data_save_addr = f"contest_output_round{round}.xlsx"
+        print(f"contest created, round {self.round}")
     def add_contestant(self,contestant:contestant.contestant):
+        Already_in_game = False
         try:
             res = self.people_in_groups[contestant.group]
         except:
             res = 0
         if res < self.group_cap:
-            self.contestants.append(contestant)
-            contestant.accepted_for_running = True
-            self.people_in_groups.update({contestant.group:1+res})
+            for con_ in self.contestants:
+                if con_.number == contestant.number or contestant.id == con_.id:
+                    Already_in_game = True
+            if not Already_in_game:
+                self.contestants.append(contestant)
+                contestant.accepted_for_running = True
+                self.people_in_groups.update({contestant.group:1+res})
+                return True
+            else:
+                print("already in game")
+                raise RuntimeError
+                
         else:
             print("no group cap for new person, change group")
+            raise ValueError
     def start_competition(self):
         self.start_time = datetime.now()
         self.started = True
@@ -66,11 +78,13 @@ class contest:
         for contestant_ in self.contestants:
             if contestant_.finished_time == None:
                 contestant_.finished_time = datetime.now()
+        self.save_to_xl_file(self.data_save_addr)
         #self.calculate_times_for_competitors()
-        self.calculate_times_for_groups()
+        #self.calculate_times_for_groups()
     def return_contestant_by_id(self , id):
         for contestant_ in self.contestants:
-            if contestant_.id == id: return contestant_ 
+            if contestant_.id == id:
+                return contestant_ 
     def save_to_xl_file(self, addr:str):
         data_to_save = pd.DataFrame()
         for contestant_ in self.contestants:
@@ -79,4 +93,5 @@ class contest:
             data_to_save.to_excel(self.data_save_addr,index=False)
             print(f'DataFrame is written to Excel File {self.data_save_addr} successfully.')
         except:
-            print("error saving file")
+            print("error saving file, maybe file is open.")
+            raise RuntimeError

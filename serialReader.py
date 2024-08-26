@@ -1,5 +1,5 @@
 import serial
-
+import time
 class serialConnector:
     def __init__(self,port:str,baudrate:int) -> None:
         try:
@@ -12,8 +12,18 @@ class serialConnector:
                 timeout=0)
         except:
             self.connector = None
+           
     def get_ID(self):
-        return self.connector.readline()
+        try:
+            return int(self.connector.readline().decode()) #can be String, Integer is prefered.
+        except:
+            return 0 #"" if String
+    def is_connected(self):
+        try:
+            self.connector.in_waiting
+            return True
+        except:
+            return False
+
     def reconnect(self,port:str,baudrate:int):
         self.__init__(port=port,baudrate=baudrate)
-    
