@@ -4,10 +4,8 @@ import contestant
 import serialReader
 from datetime import datetime
 import sys
-import random
 from PySide6 import QtCore, QtWidgets, QtGui
 import qdarktheme
-import time
 
 print(PySide6.__version__)
 print(PySide6.QtCore.__version__)
@@ -27,10 +25,11 @@ class My_Environment(QtWidgets.QWidget):
         super().__init__()
         self.timer =  QtCore.QTimer(self)
         self.stage = 0
-        self.timer.start(50)
-        self.timer.timeout.connect(self.refresh)
         self.port = 'COM3'
-        self.baudrate = 9600
+        self.baudrate = 9600        
+        self.timer.start(50)
+        
+        self.timer.timeout.connect(self.refresh)
         self.contest = None
         self.title = 'RunningContest2024'
         self.left = 10
@@ -86,7 +85,7 @@ class My_Environment(QtWidgets.QWidget):
         self.page2_layout_row_1.addLayout(self.col_2_page_2)
         self.page2_layout_row_1.addWidget(self.list_players_registered)
         self.add_player_button.clicked.connect(self.add_player)
-        self.button_to_page1.clicked.connect(self.show_main_page)
+        self.button_to_page1.clicked.connect(self.restart_to_page_1)
         self.page2_layout.addLayout(self.page2_layout_row_1)
         self.start_match_button.setStyleSheet("background-color:green")
         self.page2_layout.addWidget(self.button_to_page1)
@@ -111,10 +110,11 @@ class My_Environment(QtWidgets.QWidget):
         self.page3.setLayout(self.page3_layout)
         self.end_match_button.clicked.connect(self.finish_match)
 
-
         self.page4 = QWidget()
         self.match_leaderboard = QListWidget()
         self.page4_layout = QVBoxLayout()
+        self.leader_board_label = QLabel()
+        self.page4_layout.addWidget(self.leader_board_label)
         self.page4_layout.addWidget(self.match_leaderboard)
         self.page4_layout.addWidget(self.button_to_page1)
         self.page4.setLayout(self.page4_layout)
@@ -145,6 +145,10 @@ class My_Environment(QtWidgets.QWidget):
         self.stacked_widget.setCurrentIndex(2)
     def show_forth_page(self):
         self.stacked_widget.setCurrentIndex(3)
+    def restart_to_page_1(self):
+        self.match_leaderboard.clear()
+        del self.contest
+        self.show_main_page()
     def refresh(self):
         try:
             self.global_time_layout.setText("GlobalTime: "+str(datetime.now())\
@@ -155,8 +159,9 @@ class My_Environment(QtWidgets.QWidget):
         print(last_serial_read)
         if last_serial_read != 0:
             self.player_ID_integer = last_serial_read
-            self.player_ID_label.setText(f"Detected player_ID: {self.player_ID_integer}")  
-            if self.contest.started:   
+            if not self.contest.started:
+                self.player_ID_label.setText(f"Detected player_ID: {self.player_ID_integer}")  
+            else:
                 player = self.contest.return_contestant_by_id(self.player_ID_integer)
                 if not player.finished_competition:
                     item = self.list_players_in_game.takeItem(\
@@ -165,7 +170,6 @@ class My_Environment(QtWidgets.QWidget):
                     player.finished()
                     player_data = player.to_string(True)
                     self.list_players_finished.addItem(player_data)
-                    
                     
         self.reconnect_button.setStyleSheet("background-color :green" if self.connector.is_connected() else\
                                             "background-color :red")
@@ -176,6 +180,7 @@ class My_Environment(QtWidgets.QWidget):
     def make_contest(self):
         try:
             self.contest = contest(int(self.round_text_box.text()))
+            self.leader_board_label.setText(f"Leaderboard of round {str(self.contest.round)}:")
             self.show_second_page()
         except:
             print("unacceptable input or can't make contest.")
@@ -209,7 +214,9 @@ class My_Environment(QtWidgets.QWidget):
             self.list_players_in_game.addItem(player_data)
     def finish_match(self):
         self.contest.finish_competition()
-        
+        self.contest.contestants.sort(key=lambda x: x.person_race_duration.total_seconds())
+        for i,con in enumerate(self.contest.contestants):
+            self.match_leaderboard.addItem(f"{i+1} : {con.to_string(True)}")
         self.list_players_in_game.clear()
         self.list_players_finished.clear()
         self.show_forth_page()

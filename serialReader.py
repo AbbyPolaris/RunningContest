@@ -1,5 +1,5 @@
 import serial
-import time
+
 class serialConnector:
     def __init__(self,port:str,baudrate:int) -> None:
         try:
@@ -27,3 +27,4 @@ class serialConnector:
 
     def reconnect(self,port:str,baudrate:int):
         self.__init__(port=port,baudrate=baudrate)
+

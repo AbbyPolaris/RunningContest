@@ -76,8 +76,10 @@ class contest:
             self.people_in_groups.update({contestant_.group:1+res})
     def finish_competition(self):
         for contestant_ in self.contestants:
-            if contestant_.finished_time == None:
-                contestant_.finished_time = datetime.now()
+            if contestant_.finished_competition == False:
+                contestant_.finished()
+
+
         self.save_to_xl_file(self.data_save_addr)
         #self.calculate_times_for_competitors()
         #self.calculate_times_for_groups()
