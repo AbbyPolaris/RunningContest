@@ -2,10 +2,11 @@ import PySide6.QtCore
 import contest
 import contestant
 import serialReader
-from datetime import datetime
+import datetime
 import sys
 from PySide6 import QtCore, QtWidgets, QtGui
 import qdarktheme
+from excelReader import exelReader
 
 print(PySide6.__version__)
 print(PySide6.QtCore.__version__)
@@ -28,7 +29,8 @@ class My_Environment(QtWidgets.QWidget):
         self.port = 'COM3'
         self.baudrate = 9600        
         self.timer.start(50)
-        
+        self.outputs_reader = exelReader()
+        self.exel_file_name = "output_round_"
         self.timer.timeout.connect(self.refresh)
         self.contest = None
         self.title = 'RunningContest2024'
@@ -47,12 +49,18 @@ class My_Environment(QtWidgets.QWidget):
         self.page1_layout = QHBoxLayout()
         self.col_1_page_1 = QVBoxLayout()
         self.create_game_button = QPushButton("Create round")
-        self.welcome = QLabel("welcome, enter the round number to proceed to the next page which you will add compatitors in.")
+        self.welcome = QLabel("Welcome, enter the round_number to proceed to the next page to add compatitors.")
         self.round_text_box = QLineEdit(self)
         self.round_text_box.setPlaceholderText("Enter the round")
+        self.show_groups_leaderboard = QPushButton("Show groups leaderboard")
+        self.show_groups_leaderboard.clicked.connect(self.make_and_show_groupleaderboard)
+        #self.show_groups_leaderboard.setStyleSheet("background-color: darkblue")
+
         self.col_1_page_1.addWidget(self.welcome)
         self.col_1_page_1.addWidget(self.round_text_box)
         self.col_1_page_1.addWidget(self.create_game_button)
+        self.col_1_page_1.addWidget(QLabel(""))
+        self.col_1_page_1.addWidget(self.show_groups_leaderboard)
         self.page1_layout.addLayout(self.col_1_page_1)
         self.create_game_button.clicked.connect(self.make_contest)
         self.page1.setLayout(self.page1_layout)
@@ -70,7 +78,8 @@ class My_Environment(QtWidgets.QWidget):
         self.player_group.setPlaceholderText("Enter player's Group")
         self.player_ID_label = QLabel("NO_ID")
         self.add_player_button = QPushButton("add player")
-        self.refresh_serial = QPushButton("refresh serial port")
+        self.refresh_serial = QPushButton("refresh ID")
+        self.refresh_serial.clicked.connect(self.refresh_ID)
         self.player_number = QLineEdit()
         self.player_number.setPlaceholderText("Enter player number")
         self.col_1_page_2.addWidget(self.player_ID_label)
@@ -79,7 +88,7 @@ class My_Environment(QtWidgets.QWidget):
         self.col_1_page_2.addWidget(self.player_group)
         self.col_1_page_2.addWidget(self.refresh_serial)
         self.col_1_page_2.addWidget(self.add_player_button)
-        self.button_to_page1 = QPushButton("## remake contest ##")
+        self.button_to_page1 = QPushButton("back to home (or create new round)")
         self.button_to_page1.setStyleSheet("background-color: black")
         self.page2_layout_row_1.addLayout(self.col_1_page_2)
         self.page2_layout_row_1.addLayout(self.col_2_page_2)
@@ -105,7 +114,7 @@ class My_Environment(QtWidgets.QWidget):
         self.page_3_row_1.addWidget(self.list_players_in_game)
         self.page3_layout.addLayout(self.page_3_row_1_2)
         self.page3_layout.addLayout(self.page_3_row_1)
-        self.end_match_button = QPushButton("end the match. (player finish time will be current time if not finished)")
+        self.end_match_button = QPushButton("end the round and save data. (force finish in_game players)")
         self.page3_layout.addWidget(self.end_match_button)
         self.page3.setLayout(self.page3_layout)
         self.end_match_button.clicked.connect(self.finish_match)
@@ -119,13 +128,25 @@ class My_Environment(QtWidgets.QWidget):
         self.page4_layout.addWidget(self.button_to_page1)
         self.page4.setLayout(self.page4_layout)
 
+        self.page5 = QWidget()
+        self.groups_leaderboard = QListWidget()
+        self.page5_layout = QVBoxLayout()
+        self.groups_leaderboard_label = QLabel("Groups leaderboard")
+        self.back_to_home_button = QPushButton("back to home (or create new round)")
+        self.back_to_home_button.setStyleSheet("background-color : black")
+        self.page5_layout.addWidget(self.groups_leaderboard_label)
+        self.page5_layout.addWidget(self.groups_leaderboard)
+        self.page5_layout.addWidget(self.back_to_home_button)
+        self.page5.setLayout(self.page5_layout)
+        self.back_to_home_button.clicked.connect(self.restart_to_page_1)
         self.stacked_widget.addWidget(self.page1)
         self.stacked_widget.addWidget(self.page2)
         self.stacked_widget.addWidget(self.page3)
         self.stacked_widget.addWidget(self.page4)
+        self.stacked_widget.addWidget(self.page5)
 
         main_layout = QVBoxLayout()
-        self.global_time_layout = QLabel("GlobalTime: "+str(datetime.now()))
+        self.global_time_layout = QLabel("GlobalTime: "+str(datetime.datetime.now()))
         self.reconnect_button = QPushButton("Reconnect serial")
         self.rigid_data = QHBoxLayout()
         self.rigid_data.addWidget(self.global_time_layout)
@@ -147,11 +168,14 @@ class My_Environment(QtWidgets.QWidget):
         self.stacked_widget.setCurrentIndex(3)
     def restart_to_page_1(self):
         self.match_leaderboard.clear()
-        del self.contest
+        self.groups_leaderboard.clear()
+        self.contest = None
         self.show_main_page()
+    def show_fifth_page(self):
+        self.stacked_widget.setCurrentIndex(4)
     def refresh(self):
         try:
-            self.global_time_layout.setText("GlobalTime: "+str(datetime.now())\
+            self.global_time_layout.setText("GlobalTime: "+str(datetime.datetime.now())\
                                             +"  MatchStart: "+str(self.contest.start_time))
         except:
             pass
@@ -172,14 +196,17 @@ class My_Environment(QtWidgets.QWidget):
                     self.list_players_finished.addItem(player_data)
                     
         self.reconnect_button.setStyleSheet("background-color :green" if self.connector.is_connected() else\
-                                            "background-color :red")
-
+                                            "background-color :darkred")
+    def refresh_ID(self):
+        self.player_ID_integer = 0
+        self.player_ID_label.setText("NO_ID")
     def reconnect(self):
         if not self.connector.is_connected():
             self.connector.reconnect(self.port,self.baudrate)
     def make_contest(self):
         try:
             self.contest = contest(int(self.round_text_box.text()))
+            self.contest.exel_file_name = self.exel_file_name
             self.leader_board_label.setText(f"Leaderboard of round {str(self.contest.round)}:")
             self.show_second_page()
         except:
@@ -201,6 +228,36 @@ class My_Environment(QtWidgets.QWidget):
             if itemList.item(index).text() == self.contest.return_contestant_by_id(ID).to_string(False):
                 print("found item in Qlist")
                 return index
+    def make_and_show_groupleaderboard(self):
+        all_data,n_files_found = self.outputs_reader(self.exel_file_name)
+        groups_data = {}
+        groups_total_players = {}
+        for _,_,_,gnum,_,_,duration in all_data:
+            if gnum not in groups_data:
+                groups_data[gnum] = 0
+                groups_total_players[gnum] = 0
+            groups_data[gnum] += duration
+            groups_total_players[gnum] += 1
+        all_data = None
+        #sorted_groups = sorted(groups_data.items(),key=lambda item:item[1])
+        good_groups = []
+        bad_groups = []
+        for item in groups_data.items():
+            if groups_total_players[item[0]] != n_files_found:
+                bad_groups.append(item)
+            else:
+                good_groups.append(item)
+        good_groups = sorted(good_groups,key=lambda item:item[1]) 
+        bad_groups = sorted(bad_groups,key=lambda item:item[1])      
+        sorted_groups = good_groups+bad_groups
+        groups_data = {}
+        #del groups_total_players
+        for index, item in enumerate(sorted_groups):
+            self.groups_leaderboard.addItem\
+                (f"place {index+1}: (Group {item[0]}, number of players: {groups_total_players[item[0]]}, Total_time: {datetime.timedelta(seconds=item[1])})")
+        groups_total_players = {}
+        sorted_groups = []
+        self.show_fifth_page()
     def start_match(self):
         self.player_ID_integer = 0
         self.list_players_registered.clear()

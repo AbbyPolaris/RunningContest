@@ -5,13 +5,14 @@ class contest:
     def __init__(self,round:int) -> None:
         self.round = round
         self.group_cap = 1
+        self.exel_file_name = None
         self.start_time = None
         self.started = False
         self.contestants = []
         self.calculated_times_for_groups = {}
         self.calculated_times_for_competitors = {}
         self.people_in_groups = {}
-        self.data_save_addr = f"contest_output_round{round}.xlsx"
+        
         print(f"contest created, round {self.round}")
     def add_contestant(self,contestant:contestant.contestant):
         Already_in_game = False
@@ -36,6 +37,7 @@ class contest:
             print("no group cap for new person, change group")
             raise ValueError
     def start_competition(self):
+        self.data_save_addr = f"{self.exel_file_name}{self.round}.xlsx"
         self.start_time = datetime.now()
         self.started = True
         for contestant_ in self.contestants: 
@@ -79,7 +81,6 @@ class contest:
             if contestant_.finished_competition == False:
                 contestant_.finished()
 
-
         self.save_to_xl_file(self.data_save_addr)
         #self.calculate_times_for_competitors()
         #self.calculate_times_for_groups()
@@ -91,9 +92,9 @@ class contest:
         data_to_save = pd.DataFrame()
         for contestant_ in self.contestants:
             data_to_save = pd.concat([data_to_save,contestant_.to_pandas_DF()])
-        try:
-            data_to_save.to_excel(self.data_save_addr,index=False)
-            print(f'DataFrame is written to Excel File {self.data_save_addr} successfully.')
-        except:
-            print("error saving file, maybe file is open.")
-            raise RuntimeError
+   
+        data_to_save.to_excel(self.data_save_addr,index=False)
+        print(f'DataFrame is written to Excel File {self.data_save_addr} successfully.')
+   
+        print("error saving file, maybe file is open.")
+        
