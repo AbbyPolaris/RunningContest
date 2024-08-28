@@ -1,3 +1,6 @@
+##before executing the code, make sure that the port and baudrate are correct,
+##you can change the refresh_time if you want to update time and read the serialport faster.
+
 import PySide6.QtCore
 import contest
 import contestant
@@ -24,11 +27,14 @@ serialReader = serialReader.serialConnector
 class My_Environment(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-        self.timer =  QtCore.QTimer(self)
-        self.stage = 0
+
         self.port = 'COM3'
         self.baudrate = 9600        
-        self.timer.start(50)
+        self.refresh_time_ms = 50
+
+        self.timer =  QtCore.QTimer(self)
+        self.stage = 0        
+        self.timer.start(self.refresh_time_ms)
         self.outputs_reader = exelReader()
         self.exel_file_name = "output_round_"
         self.timer.timeout.connect(self.refresh)
