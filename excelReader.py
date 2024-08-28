@@ -18,4 +18,3 @@ class exelReader:
             return self.commulated_data,n_files_found
         except:
             return None
-

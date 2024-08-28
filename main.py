@@ -10,6 +10,7 @@ from excelReader import exelReader
 
 print(PySide6.__version__)
 print(PySide6.QtCore.__version__)
+
 QWidget=QtWidgets.QWidget
 QVBoxLayout=QtWidgets.QVBoxLayout
 QLabel=QtWidgets.QLabel
@@ -19,7 +20,6 @@ QLineEdit = QtWidgets.QLineEdit
 QListWidget = QtWidgets.QListWidget
 contest = contest.contest
 serialReader = serialReader.serialConnector
-
 
 class My_Environment(QtWidgets.QWidget):
     def __init__(self):
@@ -49,7 +49,7 @@ class My_Environment(QtWidgets.QWidget):
         self.page1_layout = QHBoxLayout()
         self.col_1_page_1 = QVBoxLayout()
         self.create_game_button = QPushButton("Create round")
-        self.welcome = QLabel("Welcome, enter the round_number to proceed to the next page to add compatitors.")
+        self.welcome = QLabel("Welcome, enter the round_number to proceed to the next page and add competitors.")
         self.round_text_box = QLineEdit(self)
         self.round_text_box.setPlaceholderText("Enter the round")
         self.show_groups_leaderboard = QPushButton("Show groups leaderboard")
@@ -66,9 +66,11 @@ class My_Environment(QtWidgets.QWidget):
         self.page1.setLayout(self.page1_layout)
 
         self.list_players_registered = QListWidget()
+        self.number_of_registered = QLabel("")
         self.page2 = QWidget()
         self.page2_layout = QVBoxLayout()
         self.page2_layout_row_1 = QHBoxLayout()
+        self.page2_layout_col_2 = QVBoxLayout()
         self.col_1_page_2 = QVBoxLayout()
         self.col_2_page_2 = QVBoxLayout()
         self.player_name = QLineEdit()
@@ -86,13 +88,16 @@ class My_Environment(QtWidgets.QWidget):
         self.col_1_page_2.addWidget(self.player_number)
         self.col_1_page_2.addWidget(self.player_name)
         self.col_1_page_2.addWidget(self.player_group)
-        self.col_1_page_2.addWidget(self.refresh_serial)
         self.col_1_page_2.addWidget(self.add_player_button)
+        self.col_1_page_2.addWidget(self.refresh_serial)
         self.button_to_page1 = QPushButton("back to home (or create new round)")
         self.button_to_page1.setStyleSheet("background-color: black")
         self.page2_layout_row_1.addLayout(self.col_1_page_2)
         self.page2_layout_row_1.addLayout(self.col_2_page_2)
-        self.page2_layout_row_1.addWidget(self.list_players_registered)
+        self.page2_layout_col_2.addWidget(self.number_of_registered)
+        self.page2_layout_col_2.addWidget(self.list_players_registered)
+        self.page2_layout_row_1.addLayout(self.page2_layout_col_2)
+
         self.add_player_button.clicked.connect(self.add_player)
         self.button_to_page1.clicked.connect(self.restart_to_page_1)
         self.page2_layout.addLayout(self.page2_layout_row_1)
@@ -178,9 +183,9 @@ class My_Environment(QtWidgets.QWidget):
             self.global_time_layout.setText("GlobalTime: "+str(datetime.datetime.now())\
                                             +"  MatchStart: "+str(self.contest.start_time))
         except:
-            pass
+            self.global_time_layout.setText("GlobalTime: "+str(datetime.datetime.now()))
         last_serial_read = self.connector.get_ID()
-        print(last_serial_read)
+        #print(last_serial_read)
         if last_serial_read != 0:
             self.player_ID_integer = last_serial_read
             if not self.contest.started:
@@ -208,6 +213,7 @@ class My_Environment(QtWidgets.QWidget):
             self.contest = contest(int(self.round_text_box.text()))
             self.contest.exel_file_name = self.exel_file_name
             self.leader_board_label.setText(f"Leaderboard of round {str(self.contest.round)}:")
+            self.number_of_registered.setText("Registered players: ")
             self.show_second_page()
         except:
             print("unacceptable input or can't make contest.")
@@ -218,6 +224,7 @@ class My_Environment(QtWidgets.QWidget):
         if self.contest.add_contestant(player):
             player_data = player.to_string(False)
             self.list_players_registered.addItem(player_data)
+            self.number_of_registered.setText(f"Registered players: {len(self.contest.contestants)}")
             self.player_group.clear()
             self.player_number.clear()
             self.player_name.clear()
