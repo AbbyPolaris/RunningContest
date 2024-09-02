@@ -89,12 +89,13 @@ class contest:
             if contestant_.id == id:
                 return contestant_ 
     def save_to_xl_file(self, addr:str):
-        data_to_save = pd.DataFrame()
-        for contestant_ in self.contestants:
-            data_to_save = pd.concat([data_to_save,contestant_.to_pandas_DF()])
-   
-        data_to_save.to_excel(self.data_save_addr,index=False)
-        print(f'DataFrame is written to Excel File {self.data_save_addr} successfully.')
-   
-        print("error saving file, maybe file is open.")
+        try:
+            data_to_save = pd.DataFrame()
+            for contestant_ in self.contestants:
+                data_to_save = pd.concat([data_to_save,contestant_.to_pandas_DF()])
+    
+            data_to_save.to_excel(self.data_save_addr,index=False)
+            print(f'DataFrame is written to Excel File {self.data_save_addr} successfully.')
+        except:
+            print("error saving file, maybe file is open.")
         

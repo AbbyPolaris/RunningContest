@@ -85,7 +85,13 @@ class My_Environment(QtWidgets.QWidget):
         self.player_group = QLineEdit()
         self.player_group.setPlaceholderText("Enter player's Group")
         self.player_ID_label = QLabel("NO_ID")
-        self.add_player_button = QPushButton("add player")
+        self.layout_add_player = QHBoxLayout()
+        self.add_player_button = QPushButton("add player with detected ID")
+        self.force_add_player = QPushButton("fource add player")
+        self.layout_add_player.addWidget(self.add_player_button)
+        self.layout_add_player.addWidget(self.force_add_player)
+        self.force_add_player.setStyleSheet("background-color: darkred")
+        self.force_add_player.clicked.connect(self.add_player_no_ID)
         self.refresh_serial = QPushButton("refresh ID")
         self.refresh_serial.clicked.connect(self.refresh_ID)
         self.player_number = QLineEdit()
@@ -94,8 +100,9 @@ class My_Environment(QtWidgets.QWidget):
         self.col_1_page_2.addWidget(self.player_number)
         self.col_1_page_2.addWidget(self.player_name)
         self.col_1_page_2.addWidget(self.player_group)
-        self.col_1_page_2.addWidget(self.add_player_button)
+        self.col_1_page_2.addLayout(self.layout_add_player)
         self.col_1_page_2.addWidget(self.refresh_serial)
+        self.col_1_page_2.addWidget(QLabel(""))           
         self.button_to_page1 = QPushButton("back to home (or create new round)")
         self.button_to_page1.setStyleSheet("background-color: black")
         self.page2_layout_row_1.addLayout(self.col_1_page_2)
@@ -103,7 +110,6 @@ class My_Environment(QtWidgets.QWidget):
         self.page2_layout_col_2.addWidget(self.number_of_registered)
         self.page2_layout_col_2.addWidget(self.list_players_registered)
         self.page2_layout_row_1.addLayout(self.page2_layout_col_2)
-
         self.add_player_button.clicked.connect(self.add_player)
         self.button_to_page1.clicked.connect(self.restart_to_page_1)
         self.page2_layout.addLayout(self.page2_layout_row_1)
@@ -119,8 +125,11 @@ class My_Environment(QtWidgets.QWidget):
         self.page3_layout = QVBoxLayout()
         self.page_3_row_1 = QHBoxLayout()
         self.page_3_row_1_2 = QHBoxLayout()
-        self.page_3_row_1_2.addWidget(QLabel("Finished"))
-        self.page_3_row_1_2.addWidget(QLabel("In Game"))
+        self.in_game_label = QLabel("")
+        self.finished_label = QLabel("")     
+        self.page_3_row_1_2.addWidget(self.finished_label)       
+        self.page_3_row_1_2.addWidget(self.in_game_label)
+
         self.page_3_row_1.addWidget(self.list_players_finished)
         self.page_3_row_1.addWidget(self.list_players_in_game)
         self.page3_layout.addLayout(self.page_3_row_1_2)
@@ -129,6 +138,7 @@ class My_Environment(QtWidgets.QWidget):
         self.page3_layout.addWidget(self.end_match_button)
         self.page3.setLayout(self.page3_layout)
         self.end_match_button.clicked.connect(self.finish_match)
+        self.list_players_in_game.itemDoubleClicked.connect(self.finish_clicked_player)
 
         self.page4 = QWidget()
         self.match_leaderboard = QListWidget()
@@ -197,15 +207,8 @@ class My_Environment(QtWidgets.QWidget):
             if not self.contest.started:
                 self.player_ID_label.setText(f"Detected player_ID: {self.player_ID_integer}")  
             else:
-                player = self.contest.return_contestant_by_id(self.player_ID_integer)
-                if not player.finished_competition:
-                    item = self.list_players_in_game.takeItem(\
-                                self.find_Item_by_ID(self.list_players_in_game,self.player_ID_integer))
-                    del item
-                    player.finished()
-                    player_data = player.to_string(True)
-                    self.list_players_finished.addItem(player_data)
-                    
+                self.finish_player(self.player_ID_integer)
+                
         self.reconnect_button.setStyleSheet("background-color :green" if self.connector.is_connected() else\
                                             "background-color :darkred")
     def refresh_ID(self):
@@ -214,6 +217,20 @@ class My_Environment(QtWidgets.QWidget):
     def reconnect(self):
         if not self.connector.is_connected():
             self.connector.reconnect(self.port,self.baudrate)
+    def finish_player(self,player_ID_integer):
+        player = self.contest.return_contestant_by_id(player_ID_integer)
+        if player != None:
+            if not player.finished_competition:
+                item = self.list_players_in_game.takeItem(\
+                            self.find_Item_by_ID(self.list_players_in_game,player_ID_integer))
+                del item
+                player.finished()
+                player_data = player.to_string(True)
+                self.list_players_finished.addItem(player_data)
+        else:
+            print("player not registered.")   
+        self.finished_label.setText(f"Finished: {(self.list_players_finished.count())}")
+        self.in_game_label.setText(f"Running:  {(self.list_players_in_game.count())}")
     def make_contest(self):
         try:
             self.contest = contest(int(self.round_text_box.text()))
@@ -224,8 +241,9 @@ class My_Environment(QtWidgets.QWidget):
         except:
             print("unacceptable input or can't make contest.")
     def add_player(self):
+        ID = self.player_ID_integer 
         player = contestant.contestant(self.player_name.text(),\
-                                        int(self.player_group.text()),self.player_ID_integer,\
+                                        int(self.player_group.text()),ID,\
                                         int(self.player_number.text()))
         if self.contest.add_contestant(player):
             player_data = player.to_string(False)
@@ -234,13 +252,31 @@ class My_Environment(QtWidgets.QWidget):
             self.player_group.clear()
             self.player_number.clear()
             self.player_name.clear()
-        print(self.contest.people_in_groups)
+        #print(self.contest.people_in_groups)
+    def add_player_no_ID(self):
+        ID = int(self.player_number.text())
+        player = contestant.contestant(self.player_name.text(),\
+                                        int(self.player_group.text()),ID,\
+                                        int(self.player_number.text()))
+        if self.contest.add_contestant(player):
+            player_data = player.to_string(False)
+            self.list_players_registered.addItem(player_data)
+            self.number_of_registered.setText(f"Registered players: {len(self.contest.contestants)}")
+            self.player_group.clear()
+            self.player_number.clear()
+            self.player_name.clear()
     def find_Item_by_ID(self,itemList:QListWidget,ID):
         for index in range(itemList.count()):
             print(itemList.item(index).text() , self.contest.return_contestant_by_id(ID).to_string(False))
             if itemList.item(index).text() == self.contest.return_contestant_by_id(ID).to_string(False):
                 print("found item in Qlist")
                 return index
+    def finish_clicked_player(self,item):
+        ID = self.get_ID_from_text(item.text())
+        self.finish_player(int(ID))
+
+    def get_ID_from_text(self,text:str):
+        return text.split(", ")[2][4:]
     def make_and_show_groupleaderboard(self):
         all_data,n_files_found = self.outputs_reader(self.exel_file_name)
         groups_data = {}
@@ -274,6 +310,7 @@ class My_Environment(QtWidgets.QWidget):
     def start_match(self):
         self.player_ID_integer = 0
         self.list_players_registered.clear()
+        self.refresh_ID()
         if len(self.contest.contestants) != 0:
             self.contest.start_competition()
             self.show_in_contest_page()
@@ -282,6 +319,8 @@ class My_Environment(QtWidgets.QWidget):
         for contestant_ in self.contest.contestants:
             player_data = contestant_.to_string(False)
             self.list_players_in_game.addItem(player_data)
+        self.finished_label.setText(f"Finished: {(self.list_players_finished.count())}")
+        self.in_game_label.setText(f"Running:  {(self.list_players_in_game.count())}")
     def finish_match(self):
         self.contest.finish_competition()
         self.contest.contestants.sort(key=lambda x: x.person_race_duration.total_seconds())

@@ -1,4 +1,5 @@
 import serial
+#if you know what the dataType is, you can add modify return_if_good_type function to filter bad data.
 
 class serialConnector:
     def __init__(self,port:str,baudrate:int) -> None:
@@ -15,7 +16,8 @@ class serialConnector:
            
     def get_ID(self):
         try:
-            return int(self.connector.readline().decode()) #can be String, Integer is prefered.
+            Id = int(self.connector.readline().decode())
+            return self.return_if_good_type(data=Id)
         except:
             return 0 #"" if String
     def is_connected(self):
@@ -24,7 +26,8 @@ class serialConnector:
             return True
         except:
             return False
-
+    def return_if_good_type(self,data):
+        return data
     def reconnect(self,port:str,baudrate:int):
         self.__init__(port=port,baudrate=baudrate)
 

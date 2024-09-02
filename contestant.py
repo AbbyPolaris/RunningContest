@@ -33,7 +33,7 @@ class contestant:
         return pd.DataFrame([[self.id,self.Name,self.number,self.group,self.start_time,self.finished_time,total_duration_secs]]\
                             ,columns=['ID','Name','Number','Group','Start','Finish','Duration'])
     def to_string(self,duration_time:bool):
-        return_string = f"Name: {self.Name}, Number: {self.number}, ID: {self.id}, GroupNumber: {self.group},Finished: {self.finished_competition}"
+        return_string = f"Name: {self.Name}, Number: {self.number}, ID: {self.id}, GroupNumber: {self.group}, Finished: {self.finished_competition}"
         if duration_time:
             return f"{return_string}, Duration: {self.person_race_duration}"
         else:
