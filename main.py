@@ -152,7 +152,7 @@ class My_Environment(QtWidgets.QWidget):
         self.page5 = QWidget()
         self.groups_leaderboard = QListWidget()
         self.page5_layout = QVBoxLayout()
-        self.groups_leaderboard_label = QLabel("Groups leaderboard")
+        self.groups_leaderboard_label = QLabel("Groups leaderboard:")
         self.back_to_home_button = QPushButton("back to home (or create new round)")
         self.back_to_home_button.setStyleSheet("background-color : black")
         self.page5_layout.addWidget(self.groups_leaderboard_label)
@@ -228,7 +228,7 @@ class My_Environment(QtWidgets.QWidget):
                 player_data = player.to_string(True)
                 self.list_players_finished.addItem(player_data)
         else:
-            print("player not registered.")   
+            print(f"{player_ID_integer}: player not registered.")   
         self.finished_label.setText(f"Finished: {(self.list_players_finished.count())}")
         self.in_game_label.setText(f"Running:  {(self.list_players_in_game.count())}")
     def make_contest(self):
