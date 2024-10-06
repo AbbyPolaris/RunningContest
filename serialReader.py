@@ -19,7 +19,7 @@ class serialConnector:
             Id = int(self.connector.readline().decode())
             return self.return_if_good_type(data=Id)
         except:
-            return 0 #"" if String
+            return 0 # "" if String
     def is_connected(self):
         try:
             self.connector.in_waiting
@@ -27,6 +27,7 @@ class serialConnector:
         except:
             return False
     def return_if_good_type(self,data):
+        #change this to filter bad data.
         return data
     def reconnect(self,port:str,baudrate:int):
         self.__init__(port=port,baudrate=baudrate)

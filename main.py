@@ -10,9 +10,15 @@ import sys
 from PySide6 import QtCore, QtWidgets, QtGui
 import qdarktheme
 from excelReader import exelReader
+from screeninfo import get_monitors
+import os
 
-print(PySide6.__version__)
-print(PySide6.QtCore.__version__)
+print(f"Pyside version: {PySide6.__version__}")
+print(f"Qtcore version: {PySide6.QtCore.__version__}")
+
+dirname = os.path.dirname(PySide6.__file__)
+plugin_path = os.path.join(dirname, 'plugins', 'platforms')
+os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path
 
 QWidget=QtWidgets.QWidget
 QVBoxLayout=QtWidgets.QVBoxLayout
@@ -27,16 +33,21 @@ serialReader = serialReader.serialConnector
 class My_Environment(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
-
+        
+        #change these based on your configuration.
         self.port = 'COM3'
         self.baudrate = 9600        
         self.refresh_time_ms = 50
+        #self.font_size = 16
+        ##
 
         self.timer =  QtCore.QTimer(self)
         self.stage = 0        
         self.timer.start(self.refresh_time_ms)
         self.outputs_reader = exelReader()
+        self.save_dir = '../RunnigContest/storage/'
         self.exel_file_name = "output_round_"
+        self.exel_file_dir_and_name = f"{self.save_dir}{self.exel_file_name}"
         self.timer.timeout.connect(self.refresh)
         self.contest = None
         self.title = 'RunningContest2024'
@@ -87,7 +98,7 @@ class My_Environment(QtWidgets.QWidget):
         self.player_ID_label = QLabel("NO_ID")
         self.layout_add_player = QHBoxLayout()
         self.add_player_button = QPushButton("add player with detected ID")
-        self.force_add_player = QPushButton("fource add player")
+        self.force_add_player = QPushButton("force add player(number as ID)")
         self.layout_add_player.addWidget(self.add_player_button)
         self.layout_add_player.addWidget(self.force_add_player)
         self.force_add_player.setStyleSheet("background-color: darkred")
@@ -134,7 +145,7 @@ class My_Environment(QtWidgets.QWidget):
         self.page_3_row_1.addWidget(self.list_players_in_game)
         self.page3_layout.addLayout(self.page_3_row_1_2)
         self.page3_layout.addLayout(self.page_3_row_1)
-        self.end_match_button = QPushButton("end the round and save data. (force finish in_game players)")
+        self.end_match_button = QPushButton("end the round and save data. (force finish Running players)")
         self.page3_layout.addWidget(self.end_match_button)
         self.page3.setLayout(self.page3_layout)
         self.end_match_button.clicked.connect(self.finish_match)
@@ -230,11 +241,11 @@ class My_Environment(QtWidgets.QWidget):
         else:
             print(f"{player_ID_integer}: player not registered.")   
         self.finished_label.setText(f"Finished: {(self.list_players_finished.count())}")
-        self.in_game_label.setText(f"Running:  {(self.list_players_in_game.count())}")
+        self.in_game_label.setText(f"Running:  {(self.list_players_in_game.count())}  (Double click to force finish runner)")
     def make_contest(self):
         try:
             self.contest = contest(int(self.round_text_box.text()))
-            self.contest.exel_file_name = self.exel_file_name
+            self.contest.exel_file_name = self.exel_file_dir_and_name
             self.leader_board_label.setText(f"Leaderboard of round {str(self.contest.round)}:")
             self.number_of_registered.setText("Registered players: ")
             self.show_second_page()
@@ -265,7 +276,7 @@ class My_Environment(QtWidgets.QWidget):
             self.player_group.clear()
             self.player_number.clear()
             self.player_name.clear()
-    def find_Item_by_ID(self,itemList:QListWidget,ID):
+    def find_Item_by_ID(self,itemList,ID):
         for index in range(itemList.count()):
             print(itemList.item(index).text() , self.contest.return_contestant_by_id(ID).to_string(False))
             if itemList.item(index).text() == self.contest.return_contestant_by_id(ID).to_string(False):
@@ -278,7 +289,7 @@ class My_Environment(QtWidgets.QWidget):
     def get_ID_from_text(self,text:str):
         return text.split(", ")[2][4:]
     def make_and_show_groupleaderboard(self):
-        all_data,n_files_found = self.outputs_reader(self.exel_file_name)
+        all_data,n_files_found = self.outputs_reader(self.exel_file_name,self.save_dir)
         groups_data = {}
         groups_total_players = {}
         for _,_,_,gnum,_,_,duration in all_data:
@@ -320,7 +331,7 @@ class My_Environment(QtWidgets.QWidget):
             player_data = contestant_.to_string(False)
             self.list_players_in_game.addItem(player_data)
         self.finished_label.setText(f"Finished: {(self.list_players_finished.count())}")
-        self.in_game_label.setText(f"Running:  {(self.list_players_in_game.count())}")
+        self.in_game_label.setText(f"Running:  {(self.list_players_in_game.count())}  (Double click to force finish runner)")
     def finish_match(self):
         self.contest.finish_competition()
         self.contest.contestants.sort(key=lambda x: x.person_race_duration.total_seconds())
@@ -330,10 +341,16 @@ class My_Environment(QtWidgets.QWidget):
         self.list_players_finished.clear()
         self.show_forth_page()
         
+def setGlobalFont(size):
+    font = QtGui.QFont()
+    font.setPointSize(size)
+    QtWidgets.QApplication.setFont(font)
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
     qdarktheme.setup_theme()
+    setGlobalFont(12)    
     widget = My_Environment()
-    widget.resize(800, 600)
+    widget.resize(1000,600)
     widget.show()
     sys.exit(app.exec())

@@ -82,8 +82,7 @@ class contest:
                 contestant_.finished()
 
         self.save_to_xl_file(self.data_save_addr)
-        #self.calculate_times_for_competitors()
-        #self.calculate_times_for_groups()
+
     def return_contestant_by_id(self , id):
         for contestant_ in self.contestants:
             if contestant_.id == id:
