@@ -44,6 +44,11 @@ class contest:
             contestant_.start_time = self.start_time
             contestant_.in_running = True
         self.save_to_xl_file(self.data_save_addr)
+    def remove_contestant_from_registered(self,contestant):
+
+        res = self.people_in_groups[contestant.group]
+        self.people_in_groups.update({contestant.group:-1+res})
+        self.contestants.remove(contestant)
 
     def calculate_times_for_groups(self):
         self.calculated_times_for_groups ={}

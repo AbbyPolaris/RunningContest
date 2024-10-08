@@ -98,7 +98,7 @@ class My_Environment(QtWidgets.QWidget):
         self.player_ID_label = QLabel("NO_ID")
         self.layout_add_player = QHBoxLayout()
         self.add_player_button = QPushButton("add player with detected ID")
-        self.force_add_player = QPushButton("force add player(number as ID)")
+        self.force_add_player = QPushButton("add player(number as ID)")
         self.layout_add_player.addWidget(self.add_player_button)
         self.layout_add_player.addWidget(self.force_add_player)
         self.force_add_player.setStyleSheet("background-color: darkred")
@@ -129,6 +129,7 @@ class My_Environment(QtWidgets.QWidget):
         self.page2_layout.addWidget(self.start_match_button)
         self.page2.setLayout(self.page2_layout)
         self.start_match_button.clicked.connect(self.start_match)
+        self.list_players_registered.itemDoubleClicked.connect(self.remove_from_registered)
 
         self.page3 = QWidget()
         self.list_players_in_game = QListWidget()
@@ -145,7 +146,7 @@ class My_Environment(QtWidgets.QWidget):
         self.page_3_row_1.addWidget(self.list_players_in_game)
         self.page3_layout.addLayout(self.page_3_row_1_2)
         self.page3_layout.addLayout(self.page_3_row_1)
-        self.end_match_button = QPushButton("end the round and save data. (force finish Running players)")
+        self.end_match_button = QPushButton("end the round and save data. (finish all Running players)")
         self.page3_layout.addWidget(self.end_match_button)
         self.page3.setLayout(self.page3_layout)
         self.end_match_button.clicked.connect(self.finish_match)
@@ -241,7 +242,7 @@ class My_Environment(QtWidgets.QWidget):
         else:
             print(f"{player_ID_integer}: player not registered.")   
         self.finished_label.setText(f"Finished: {(self.list_players_finished.count())}")
-        self.in_game_label.setText(f"Running:  {(self.list_players_in_game.count())}  (Double click to force finish runner)")
+        self.in_game_label.setText(f"Running:  {(self.list_players_in_game.count())}  (Double click to finish runner)")
     def make_contest(self):
         try:
             self.contest = contest(int(self.round_text_box.text()))
@@ -251,6 +252,18 @@ class My_Environment(QtWidgets.QWidget):
             self.show_second_page()
         except:
             print("unacceptable input or can't make contest.")
+    def remove_from_registered_by_ID(self,ID):
+        item = self.list_players_registered.takeItem(\
+            self.find_Item_by_ID(self.list_players_registered,ID))
+        del item                
+        player = self.contest.return_contestant_by_id(ID)
+        self.contest.remove_contestant_from_registered(player)
+        self.number_of_registered.setText(f"Registered players: {len(self.contest.contestants)}")
+
+    def remove_from_registered(self,item):
+        ID = self.get_ID_from_text(item.text())
+        self.remove_from_registered_by_ID(int(ID))
+
     def add_player(self):
         ID = self.player_ID_integer 
         player = contestant.contestant(self.player_name.text(),\
@@ -331,7 +344,7 @@ class My_Environment(QtWidgets.QWidget):
             player_data = contestant_.to_string(False)
             self.list_players_in_game.addItem(player_data)
         self.finished_label.setText(f"Finished: {(self.list_players_finished.count())}")
-        self.in_game_label.setText(f"Running:  {(self.list_players_in_game.count())}  (Double click to force finish runner)")
+        self.in_game_label.setText(f"Running:  {(self.list_players_in_game.count())}  (Double click to finish runner)")
     def finish_match(self):
         self.contest.finish_competition()
         self.contest.contestants.sort(key=lambda x: x.person_race_duration.total_seconds())
