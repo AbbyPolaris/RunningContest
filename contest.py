@@ -46,6 +46,7 @@ class contest:
         self.save_to_xl_file(self.data_save_addr)
     def remove_contestant_from_registered(self,contestant):
 
+
         res = self.people_in_groups[contestant.group]
         self.people_in_groups.update({contestant.group:-1+res})
         self.contestants.remove(contestant)

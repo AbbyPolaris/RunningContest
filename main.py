@@ -258,7 +258,7 @@ class My_Environment(QtWidgets.QWidget):
         del item                
         player = self.contest.return_contestant_by_id(ID)
         self.contest.remove_contestant_from_registered(player)
-        self.number_of_registered.setText(f"Registered players: {len(self.contest.contestants)}")
+        self.number_of_registered.setText(f"Registered players: {len(self.contest.contestants)} (double click to remove)")
 
     def remove_from_registered(self,item):
         ID = self.get_ID_from_text(item.text())
@@ -272,7 +272,7 @@ class My_Environment(QtWidgets.QWidget):
         if self.contest.add_contestant(player):
             player_data = player.to_string(False)
             self.list_players_registered.addItem(player_data)
-            self.number_of_registered.setText(f"Registered players: {len(self.contest.contestants)}")
+            self.number_of_registered.setText(f"Registered players: {len(self.contest.contestants)} (double click to remove)")
             self.player_group.clear()
             self.player_number.clear()
             self.player_name.clear()
@@ -285,7 +285,7 @@ class My_Environment(QtWidgets.QWidget):
         if self.contest.add_contestant(player):
             player_data = player.to_string(False)
             self.list_players_registered.addItem(player_data)
-            self.number_of_registered.setText(f"Registered players: {len(self.contest.contestants)}")
+            self.number_of_registered.setText(f"Registered players: {len(self.contest.contestants)} (double click to remove)")
             self.player_group.clear()
             self.player_number.clear()
             self.player_name.clear()
