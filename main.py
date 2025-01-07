@@ -361,8 +361,9 @@ def setGlobalFont(size):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
-    qdarktheme.setup_theme()
-    setGlobalFont(12)    
+    qdarktheme.setup_theme('light')
+    #TODO
+    setGlobalFont(16)    
     widget = My_Environment()
     widget.resize(1000,600)
     widget.show()
