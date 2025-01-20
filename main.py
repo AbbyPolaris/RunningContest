@@ -101,7 +101,7 @@ class My_Environment(QtWidgets.QWidget):
         self.force_add_player = QPushButton("add player(number as ID)")
         self.layout_add_player.addWidget(self.add_player_button)
         self.layout_add_player.addWidget(self.force_add_player)
-        self.force_add_player.setStyleSheet("background-color: darkred")
+        self.force_add_player.setStyleSheet("background-color: darkred ; color : black")
         self.force_add_player.clicked.connect(self.add_player_no_ID)
         self.refresh_serial = QPushButton("refresh ID")
         self.refresh_serial.clicked.connect(self.refresh_ID)
@@ -124,7 +124,7 @@ class My_Environment(QtWidgets.QWidget):
         self.add_player_button.clicked.connect(self.add_player)
         self.button_to_page1.clicked.connect(self.restart_to_page_1)
         self.page2_layout.addLayout(self.page2_layout_row_1)
-        self.start_match_button.setStyleSheet("background-color:green")
+        self.start_match_button.setStyleSheet("background-color:green; color: black")
         self.page2_layout.addWidget(self.button_to_page1)
         self.page2_layout.addWidget(self.start_match_button)
         self.page2.setLayout(self.page2_layout)
@@ -221,8 +221,8 @@ class My_Environment(QtWidgets.QWidget):
             else:
                 self.finish_player(self.player_ID_integer)
                 
-        self.reconnect_button.setStyleSheet("background-color :green" if self.connector.is_connected() else\
-                                            "background-color :darkred")
+        self.reconnect_button.setStyleSheet("background-color :green; color: black" if self.connector.is_connected() else\
+                                            "background-color :darkred; color: black")
     def refresh_ID(self):
         self.player_ID_integer = 0
         self.player_ID_label.setText("NO_ID")
